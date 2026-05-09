@@ -358,6 +358,29 @@
     .item-meaning { font-size: 0.72rem; color: var(--muted); }
     .item-reading { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
 
+    .has-tooltip {
+      cursor: help;
+      text-decoration: underline dotted rgba(139,148,158,0.5);
+      text-underline-offset: 2px;
+    }
+
+    /* ── Mnemonic tooltip ── */
+    #tooltip {
+      position: fixed;
+      z-index: 9999;
+      background: #1c2128;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      color: var(--text);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      max-width: 300px;
+      padding: 0.65rem 0.85rem;
+      pointer-events: none;
+      display: none;
+    }
+
     .srs-pip {
       display: inline-block;
       margin-top: 0.35rem;
@@ -741,8 +764,10 @@ function buildItemCards(items, showDue = false) {
       <div class="item-card ${type}">
         <div class="char">${char}</div>
         <a class="type-badge" href="${url}" target="_blank" rel="noopener noreferrer">${type.replace('_', ' ')}</a>
-        <div class="item-meaning">${meaning}</div>
-        ${reading ? `<div class="item-reading">${reading}</div>` : ''}
+        <div class="item-meaning${s.data.meaning_mnemonic ? ' has-tooltip' : ''}"
+             ${s.data.meaning_mnemonic ? `onmouseenter="showMnemonicTooltip(this,${s.id},'meaning')" onmouseleave="hideTooltip()"` : ''}>${meaning}</div>
+        ${reading ? `<div class="item-reading${s.data.reading_mnemonic ? ' has-tooltip' : ''}"
+             ${s.data.reading_mnemonic ? `onmouseenter="showMnemonicTooltip(this,${s.id},'reading')" onmouseleave="hideTooltip()"` : ''}>${reading}</div>` : ''}
         ${srsInfo ? `<div class="srs-pip" style="background:${srsInfo.color}22;color:${srsInfo.color};">${srsInfo.label}</div>` : ''}
         ${dueHtml}
       </div>`;
@@ -914,6 +939,47 @@ function renderChart() {
   });
 }
 
+// ── Mnemonic tooltip ───────────────────────────────────────────────────────
+
+function formatMnemonic(text) {
+  if (!text) return '';
+  return text
+    .replace(/<radical>(.*?)<\/radical>/gs,   '<span style="color:var(--radical);font-weight:600;">$1</span>')
+    .replace(/<kanji>(.*?)<\/kanji>/gs,       '<span style="color:var(--kanji);font-weight:600;">$1</span>')
+    .replace(/<vocabulary>(.*?)<\/vocabulary>/gs, '<span style="color:var(--vocab);font-weight:600;">$1</span>')
+    .replace(/<meaning>(.*?)<\/meaning>/gs,   '<span style="color:#e3b341;font-weight:600;">$1</span>')
+    .replace(/<reading>(.*?)<\/reading>/gs,   '<span style="color:#58a6ff;font-weight:600;">$1</span>')
+    .replace(/<ja>(.*?)<\/ja>/gs,             '<span style="font-style:italic;">$1</span>')
+    .replace(/<[^>]+>/g, '');
+}
+
+function showMnemonicTooltip(el, subjectId, type) {
+  const s   = state.subjectCache[subjectId];
+  const raw = type === 'meaning' ? s?.data?.meaning_mnemonic : s?.data?.reading_mnemonic;
+  if (!raw) return;
+
+  const tip = document.getElementById('tooltip');
+  tip.innerHTML = formatMnemonic(raw);
+  tip.style.display = 'block';
+
+  const er = el.getBoundingClientRect();
+  const tr = tip.getBoundingClientRect();
+
+  let top  = er.top - tr.height - 8;
+  let left = er.left + er.width / 2 - tr.width / 2;
+
+  if (top < 8)                               top  = er.bottom + 8;
+  if (left < 8)                              left = 8;
+  if (left + tr.width > window.innerWidth - 8) left = window.innerWidth - tr.width - 8;
+
+  tip.style.top  = top  + 'px';
+  tip.style.left = left + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
 // ── Status / error helpers ─────────────────────────────────────────────────
 
 function showStatus(msg) {
@@ -945,5 +1011,6 @@ if (saved) {
   loadData();
 }
 </script>
+<div id="tooltip"></div>
 </body>
 </html>
