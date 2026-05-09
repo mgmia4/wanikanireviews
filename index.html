@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WaniKani Reviews</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --muted: #8b949e;
+      --text: #e6edf3;
+      --pink: #f100a1;
+      --pink-dim: rgba(241,0,161,0.18);
+      --pink-selected: rgba(241,0,161,0.55);
+      --radical: #00aaff;
+      --kanji: #f100a1;
+      --vocab: #9b59b6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--pink);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .token-row {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .token-row input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      width: 260px;
+    }
+
+    .token-row input:focus { outline: none; border-color: var(--pink); }
+
+    .btn-primary {
+      background: var(--pink);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.45rem 1rem;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    #userBadge {
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── Layout ── */
+    main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1.25rem;
+      flex: 1;
+      min-width: 110px;
+    }
+
+    .stat-card .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--pink);
+      margin-top: 0.15rem;
+      line-height: 1;
+    }
+
+    /* ── Period buttons ── */
+    .period-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .period-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.4rem 0.9rem;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .period-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+    .period-btn.active {
+      background: var(--pink);
+      border-color: var(--pink);
+      color: #fff;
+    }
+
+    /* ── Chart ── */
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      height: 320px;
+      position: relative;
+    }
+
+    #reviewChart { cursor: pointer; }
+
+    /* ── Day detail ── */
+    #dayDetail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: none;
+    }
+
+    #dayDetail h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--pink);
+      margin-bottom: 1rem;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.65rem;
+    }
+
+    .item-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 0.65rem;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+
+    .item-card:hover { border-color: var(--muted); }
+
+    .item-card .char {
+      font-size: 2rem;
+      line-height: 1.15;
+      margin-bottom: 0.3rem;
+    }
+
+    .type-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      margin-bottom: 0.4rem;
+    }
+
+    .item-card.radical  .type-badge { background: rgba(0,170,255,0.15); color: var(--radical); }
+    .item-card.kanji    .type-badge { background: rgba(241,0,161,0.15); color: var(--kanji); }
+    .item-card.vocabulary      .type-badge,
+    .item-card.kana_vocabulary .type-badge { background: rgba(155,89,182,0.15); color: var(--vocab); }
+
+    .item-meaning { font-size: 0.72rem; color: var(--muted); }
+    .item-reading { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .srs-pip {
+      display: inline-block;
+      margin-top: 0.35rem;
+      font-size: 0.62rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+    }
+
+    /* ── Messages ── */
+    #statusMsg {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    #errorMsg {
+      background: rgba(248,81,73,0.1);
+      border: 1px solid rgba(248,81,73,0.4);
+      border-radius: 8px;
+      color: #f85149;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WaniKani Reviews</h1>
+  <div class="token-row">
+    <input type="password" id="tokenInput" placeholder="Paste API token…" autocomplete="off">
+    <button class="btn-primary" onclick="handleLoad()">Load</button>
+    <span id="userBadge"></span>
+  </div>
+</header>
+
+<main>
+  <div id="errorMsg"></div>
+  <div id="statusMsg">Enter your WaniKani API v2 token to get started.</div>
+
+  <div id="appContent" style="display:none;">
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="period-buttons" id="periodBtns"></div>
+    <div class="chart-wrap">
+      <canvas id="reviewChart"></canvas>
+    </div>
+    <div id="dayDetail"></div>
+  </div>
+</main>
+
+<script>
+const PERIODS = [7, 14, 21, 30, 60, 90];
+
+const SRS_INFO = {
+  1: { label: 'Apprentice I',   color: '#f85149' },
+  2: { label: 'Apprentice II',  color: '#f85149' },
+  3: { label: 'Apprentice III', color: '#f85149' },
+  4: { label: 'Apprentice IV',  color: '#f85149' },
+  5: { label: 'Guru I',         color: '#9b59b6' },
+  6: { label: 'Guru II',        color: '#9b59b6' },
+  7: { label: 'Master',         color: '#2188ff' },
+  8: { label: 'Enlightened',    color: '#e3b341' },
+};
+
+let state = {
+  token: null,
+  assignments: [],     // raw WK assignment objects
+  subjectCache: {},    // id → subject object
+  dayGroups: {},       // 'YYYY-MM-DD' → [assignment, ...]
+  period: 7,
+  selectedDate: null,
+  chart: null,
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function dateStr(isoOrDate) {
+  if (isoOrDate instanceof Date) return isoOrDate.toISOString().slice(0, 10);
+  return isoOrDate.slice(0, 10);
+}
+
+function daysArray(n) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Array.from({ length: n }, (_, i) =>
+    new Date(today.getTime() + i * 86_400_000).toISOString().slice(0, 10)
+  );
+}
+
+function friendlyDate(str) {
+  const today = todayStr();
+  const d = new Date(str + 'T00:00:00');
+  const tomorrow = new Date();
+  tomorrow.setHours(0, 0, 0, 0);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (str === today) return 'Today';
+  if (str === tomorrow.toISOString().slice(0, 10)) return 'Tomorrow';
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+// ── API ────────────────────────────────────────────────────────────────────
+
+async function wkFetch(url) {
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${state.token}`,
+      'Wanikani-Revision': '20170710',
+    }
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`WaniKani API ${res.status}${body ? ': ' + body : ''}`);
+  }
+  return res.json();
+}
+
+async function fetchAllPages(url) {
+  const items = [];
+  let next = url;
+  while (next) {
+    const data = await wkFetch(next);
+    items.push(...data.data);
+    next = data.pages?.next_url ?? null;
+  }
+  return items;
+}
+
+async function ensureSubjects(ids) {
+  const missing = ids.filter(id => !state.subjectCache[id]);
+  if (!missing.length) return;
+  // batch in chunks of 1000 (WK max)
+  for (let i = 0; i < missing.length; i += 1000) {
+    const chunk = missing.slice(i, i + 1000);
+    const url = `https://api.wanikani.com/v2/subjects?ids=${chunk.join(',')}`;
+    const data = await wkFetch(url);
+    for (const s of data.data) state.subjectCache[s.id] = s;
+  }
+}
+
+// ── Data processing ────────────────────────────────────────────────────────
+
+function buildDayGroups(assignments) {
+  const groups = {};
+  const today = todayStr();
+  for (const a of assignments) {
+    const at = a.data.available_at;
+    if (!at) continue;
+    // bucket anything overdue into today
+    const key = dateStr(at) < today ? today : dateStr(at);
+    (groups[key] ??= []).push(a);
+  }
+  return groups;
+}
+
+// ── Load data ──────────────────────────────────────────────────────────────
+
+async function handleLoad() {
+  const raw = document.getElementById('tokenInput').value.trim();
+  if (!raw || raw === '••••••••') {
+    // use saved token if placeholder
+    if (!state.token) return showError('Please enter your API token.');
+  } else {
+    state.token = raw;
+    localStorage.setItem('wk_token', raw);
+    document.getElementById('tokenInput').value = '••••••••';
+  }
+  await loadData();
+}
+
+async function loadData() {
+  showStatus('Loading…');
+  hideError();
+  document.getElementById('appContent').style.display = 'none';
+
+  try {
+    // User info
+    const user = await wkFetch('https://api.wanikani.com/v2/user');
+    document.getElementById('userBadge').textContent = user.data.username;
+
+    // Upcoming assignments (started, not burned, available within 90 days)
+    const end = new Date();
+    end.setDate(end.getDate() + 90);
+    const url = `https://api.wanikani.com/v2/assignments`
+      + `?available_before=${encodeURIComponent(end.toISOString())}`
+      + `&started=true&burned=false`;
+
+    state.assignments = await fetchAllPages(url);
+    state.dayGroups   = buildDayGroups(state.assignments);
+    state.selectedDate = null;
+
+    hideStatus();
+    document.getElementById('appContent').style.display = 'block';
+    renderStats();
+    renderPeriodButtons();
+    renderChart();
+  } catch (e) {
+    hideStatus();
+    showError(e.message);
+  }
+}
+
+// ── Render: stats ──────────────────────────────────────────────────────────
+
+function renderStats() {
+  const today = todayStr();
+  const now   = (state.dayGroups[today] || []).length;
+  const next7  = daysArray(7) .reduce((s, d) => s + (state.dayGroups[d]?.length ?? 0), 0);
+  const next30 = daysArray(30).reduce((s, d) => s + (state.dayGroups[d]?.length ?? 0), 0);
+  const next90 = daysArray(90).reduce((s, d) => s + (state.dayGroups[d]?.length ?? 0), 0);
+
+  document.getElementById('statsBar').innerHTML = [
+    ['Available Now', now],
+    ['Next 7 Days',   next7],
+    ['Next 30 Days',  next30],
+    ['Next 90 Days',  next90],
+  ].map(([label, value]) => `
+    <div class="stat-card">
+      <div class="label">${label}</div>
+      <div class="value">${value.toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
+// ── Render: period buttons ─────────────────────────────────────────────────
+
+function renderPeriodButtons() {
+  document.getElementById('periodBtns').innerHTML = PERIODS.map(p => `
+    <button class="period-btn${p === state.period ? ' active' : ''}"
+            onclick="setPeriod(${p})">${p} days</button>
+  `).join('');
+}
+
+function setPeriod(p) {
+  state.period = p;
+  state.selectedDate = null;
+  renderPeriodButtons();
+  renderChart();
+  document.getElementById('dayDetail').style.display = 'none';
+}
+
+// ── Render: chart ──────────────────────────────────────────────────────────
+
+function renderChart() {
+  const days   = daysArray(state.period);
+  const counts = days.map(d => state.dayGroups[d]?.length ?? 0);
+  const today  = todayStr();
+
+  const colors = days.map(d => {
+    if (d === state.selectedDate) return 'rgba(241,0,161,0.75)';
+    if (d === today)              return 'rgba(241,0,161,0.9)';
+    return 'rgba(241,0,161,0.22)';
+  });
+
+  const labels = days.map(d => {
+    const dt = new Date(d + 'T00:00:00');
+    if (state.period <= 14) {
+      return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    // For longer periods, label fewer ticks (Chart.js auto-skip handles it)
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
+  const ctx = document.getElementById('reviewChart').getContext('2d');
+  if (state.chart) state.chart.destroy();
+
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: counts,
+        backgroundColor: colors,
+        borderColor: colors.map(c => c.replace(/[\d.]+\)$/, '1)')),
+        borderWidth: 1,
+        borderRadius: 3,
+        hoverBackgroundColor: 'rgba(241,0,161,0.75)',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick(event, elements) {
+        if (!elements.length) return;
+        const idx = elements[0].index;
+        selectDay(days[idx]);
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ([item]) => friendlyDate(days[item.dataIndex]),
+            label: item => `${item.parsed.y} reviews`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:  { color: '#21262d' },
+          ticks: {
+            color: '#8b949e',
+            maxRotation: 45,
+            autoSkip: true,
+            maxTicksLimit: state.period <= 30 ? state.period : 20,
+          }
+        },
+        y: {
+          grid: { color: '#21262d' },
+          ticks: { color: '#8b949e', precision: 0 },
+          beginAtZero: true,
+        }
+      }
+    }
+  });
+}
+
+// ── Day detail ─────────────────────────────────────────────────────────────
+
+async function selectDay(date) {
+  state.selectedDate = date;
+  renderChart(); // re-colour bars
+
+  const detail = document.getElementById('dayDetail');
+  const items  = state.dayGroups[date] ?? [];
+  const label  = friendlyDate(date);
+
+  if (!items.length) {
+    detail.innerHTML = `<h2>${label} — No reviews scheduled</h2>`;
+    detail.style.display = 'block';
+    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  detail.innerHTML = `<h2>${label} — ${items.length} review${items.length !== 1 ? 's' : ''}</h2>
+    <div style="color:var(--muted);font-size:0.8rem;padding:0.5rem 0;">Loading items…</div>`;
+  detail.style.display = 'block';
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    await ensureSubjects(items.map(a => a.data.subject_id));
+  } catch (e) {
+    detail.innerHTML += `<div style="color:#f85149;font-size:0.8rem;">Could not load subject details: ${e.message}</div>`;
+    return;
+  }
+
+  const cards = items.map(a => {
+    const s = state.subjectCache[a.data.subject_id];
+    if (!s) return '';
+
+    const type     = s.object; // radical | kanji | vocabulary | kana_vocabulary
+    const char     = s.data.characters ?? s.data.slug ?? '?';
+    const meaning  = s.data.meanings?.find(m => m.primary)?.meaning ?? '';
+    const reading  = s.data.readings?.find(r => r.primary)?.reading ?? '';
+    const srs      = a.data.srs_stage;
+    const srsInfo  = SRS_INFO[srs];
+
+    return `
+      <div class="item-card ${type}">
+        <div class="char">${char}</div>
+        <div class="type-badge">${type.replace('_', ' ')}</div>
+        <div class="item-meaning">${meaning}</div>
+        ${reading ? `<div class="item-reading">${reading}</div>` : ''}
+        ${srsInfo ? `<div class="srs-pip" style="background:${srsInfo.color}22;color:${srsInfo.color};">${srsInfo.label}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  detail.innerHTML = `
+    <h2>${label} — ${items.length} review${items.length !== 1 ? 's' : ''}</h2>
+    <div class="items-grid">${cards}</div>`;
+}
+
+// ── Status / error helpers ─────────────────────────────────────────────────
+
+function showStatus(msg) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideStatus() {
+  document.getElementById('statusMsg').style.display = 'none';
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+
+const saved = localStorage.getItem('wk_token');
+if (saved) {
+  state.token = saved;
+  document.getElementById('tokenInput').value = '••••••••';
+  loadData();
+}
+</script>
+</body>
+</html>
