@@ -329,6 +329,75 @@
       color: var(--text);
     }
 
+    /* ── Custom colors ── */
+    .custom-colors {
+      display: grid;
+      gap: 0.45rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .color-row label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      width: 120px;
+      flex-shrink: 0;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      width: 32px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      padding: 2px 3px;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }
+
+    .color-text {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: ui-monospace, 'SF Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.55rem;
+      width: 90px;
+      transition: border-color 0.15s;
+    }
+
+    .color-text:focus { outline: none; border-color: var(--pink); }
+    .color-text.invalid { border-color: #f85149; }
+
+    .custom-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn-secondary {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      padding: 0.45rem 0.85rem;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+
     /* ── Layout ── */
     main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
 
@@ -679,6 +748,15 @@
       <div class="settings-label">Color Theme</div>
       <div class="theme-grid" id="themeGrid"></div>
     </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Custom Colors</div>
+      <div class="custom-colors" id="customColors"></div>
+      <div class="custom-actions">
+        <button class="btn-primary"   onclick="applyCustomTheme()">Apply &amp; Save</button>
+        <button class="btn-secondary" onclick="resetCustomFields()">Reset to current theme</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -724,17 +802,17 @@ const PERIODS = [7, 14, 21, 30, 60, 90];
 
 const THEMES = [
   // ── Dark ──
-  { id: 'dark',      name: 'Dark',      bg: '#0d1117', surface: '#161b22', text: '#e6edf3' },
-  { id: 'warm',      name: 'Warm',      bg: '#161008', surface: '#21180d', text: '#f0e6d0' },
-  { id: 'slate',     name: 'Slate',     bg: '#1e2030', surface: '#24273a', text: '#cad3f5' },
-  { id: 'onyx',      name: 'Onyx',      bg: '#21252b', surface: '#282c34', text: '#abb2bf' },
-  { id: 'dusk',      name: 'Dusk',      bg: '#1a1625', surface: '#221d30', text: '#dcd6f5' },
+  { id: 'dark',      name: 'Dark',      bg: '#0d1117', surface: '#161b22', border: '#30363d', muted: '#8b949e', text: '#e6edf3', pink: '#f100a1', radical: '#00aaff', vocab: '#9b59b6' },
+  { id: 'warm',      name: 'Warm',      bg: '#161008', surface: '#21180d', border: '#3d2e1a', muted: '#a0896e', text: '#f0e6d0', pink: '#f100a1', radical: '#3ab5ff', vocab: '#b07fd4' },
+  { id: 'slate',     name: 'Slate',     bg: '#1e2030', surface: '#24273a', border: '#363a4f', muted: '#8087a2', text: '#cad3f5', pink: '#f5699c', radical: '#89dceb', vocab: '#cba6f7' },
+  { id: 'onyx',      name: 'Onyx',      bg: '#21252b', surface: '#282c34', border: '#3e4451', muted: '#7f848e', text: '#abb2bf', pink: '#e06c9f', radical: '#61afef', vocab: '#c678dd' },
+  { id: 'dusk',      name: 'Dusk',      bg: '#1a1625', surface: '#221d30', border: '#3a3255', muted: '#8b80a8', text: '#dcd6f5', pink: '#f472b6', radical: '#7dd3fc', vocab: '#c084fc' },
   // ── Light ──
-  { id: 'paper',     name: 'Paper',     bg: '#fafaf8', surface: '#f0ede7', text: '#1c1917' },
-  { id: 'parchment', name: 'Parchment', bg: '#fdf8ee', surface: '#f5ecda', text: '#2e1f0a' },
-  { id: 'linen',     name: 'Linen',     bg: '#faf7f0', surface: '#ede8de', text: '#201c14' },
-  { id: 'rose',      name: 'Rose',      bg: '#fff8f6', surface: '#fceee9', text: '#2a1410' },
-  { id: 'sage',      name: 'Sage',      bg: '#f4f8f2', surface: '#e4ede0', text: '#1a2818' },
+  { id: 'paper',     name: 'Paper',     bg: '#fafaf8', surface: '#f0ede7', border: '#d8d4cc', muted: '#7a7570', text: '#1c1917', pink: '#c0006e', radical: '#0077cc', vocab: '#6b3fa0' },
+  { id: 'parchment', name: 'Parchment', bg: '#fdf8ee', surface: '#f5ecda', border: '#d9c9a8', muted: '#8a7558', text: '#2e1f0a', pink: '#b5004e', radical: '#0066bb', vocab: '#5e3590' },
+  { id: 'linen',     name: 'Linen',     bg: '#faf7f0', surface: '#ede8de', border: '#cec5b5', muted: '#80756a', text: '#201c14', pink: '#b80058', radical: '#006aaa', vocab: '#5a3080' },
+  { id: 'rose',      name: 'Rose',      bg: '#fff8f6', surface: '#fceee9', border: '#e8c8c0', muted: '#9a706a', text: '#2a1410', pink: '#c0004a', radical: '#0070bb', vocab: '#6a2e90' },
+  { id: 'sage',      name: 'Sage',      bg: '#f4f8f2', surface: '#e4ede0', border: '#b8ceb2', muted: '#5e7858', text: '#1a2818', pink: '#c00068', radical: '#006699', vocab: '#5a2e88' },
 ];
 
 const SRS_INFO = {
@@ -761,24 +839,61 @@ let state = {
   theme: 'dark',
 };
 
+const CUSTOM_VARS = [
+  { key: 'bg',      label: 'Background',     cssVar: '--bg'      },
+  { key: 'surface', label: 'Surface / Cards', cssVar: '--surface' },
+  { key: 'border',  label: 'Borders',         cssVar: '--border'  },
+  { key: 'muted',   label: 'Muted Text',      cssVar: '--muted'   },
+  { key: 'text',    label: 'Main Text',        cssVar: '--text'    },
+  { key: 'pink',    label: 'Accent / Kanji',   cssVar: '--pink'    },
+  { key: 'radical', label: 'Radical',          cssVar: '--radical' },
+  { key: 'vocab',   label: 'Vocabulary',       cssVar: '--vocab'   },
+];
+
 // ── Theme ──────────────────────────────────────────────────────────────────
 
 function setTheme(id) {
+  // Clear any inline custom vars so the [data-theme] CSS takes over
+  for (const { cssVar } of CUSTOM_VARS) {
+    document.documentElement.style.removeProperty(cssVar);
+  }
+  document.documentElement.style.removeProperty('--kanji');
+
   state.theme = id;
   document.documentElement.setAttribute('data-theme', id);
   localStorage.setItem('wk_theme', id);
   renderThemeGrid();
+  populateCustomFields(id);
   if (state.chart) renderChart();
 }
 
 function loadTheme() {
   const saved = localStorage.getItem('wk_theme') ?? 'dark';
   state.theme = saved;
-  document.documentElement.setAttribute('data-theme', saved);
+  if (saved === 'custom') {
+    applyStoredCustomColors();
+  } else {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+}
+
+function applyStoredCustomColors() {
+  const raw = localStorage.getItem('wk_custom_colors');
+  if (!raw) { setTheme('dark'); return; }
+  const colors = JSON.parse(raw);
+  document.documentElement.setAttribute('data-theme', 'custom');
+  for (const { key, cssVar } of CUSTOM_VARS) {
+    if (colors[key]) document.documentElement.style.setProperty(cssVar, colors[key]);
+  }
+  document.documentElement.style.setProperty('--kanji', colors.pink ?? '#f100a1');
 }
 
 function renderThemeGrid() {
-  document.getElementById('themeGrid').innerHTML = THEMES.map(t => `
+  const customColors = (() => {
+    try { return JSON.parse(localStorage.getItem('wk_custom_colors') ?? 'null'); } catch { return null; }
+  })();
+
+  const swatches = THEMES.map(t => `
     <div class="theme-swatch ${t.id === state.theme ? 'active' : ''}" onclick="setTheme('${t.id}')">
       <div class="swatch-preview">
         <div class="swatch-bg"      style="background:${t.bg}"></div>
@@ -787,6 +902,106 @@ function renderThemeGrid() {
       <div class="swatch-name" style="background:${t.bg};color:${t.text}">${t.name}</div>
     </div>
   `).join('');
+
+  const customSwatch = customColors ? `
+    <div class="theme-swatch ${'custom' === state.theme ? 'active' : ''}" onclick="setCustomTheme()">
+      <div class="swatch-preview">
+        <div class="swatch-bg"      style="background:${customColors.bg ?? '#888'}"></div>
+        <div class="swatch-surface" style="background:${customColors.surface ?? '#999'}"></div>
+      </div>
+      <div class="swatch-name" style="background:${customColors.bg ?? '#888'};color:${customColors.text ?? '#fff'}">Custom</div>
+    </div>` : '';
+
+  document.getElementById('themeGrid').innerHTML = swatches + customSwatch;
+}
+
+// ── Custom colors ──────────────────────────────────────────────────────────
+
+function renderCustomFields() {
+  document.getElementById('customColors').innerHTML = CUSTOM_VARS.map(({ key, label }) => `
+    <div class="color-row">
+      <label for="ct_${key}">${label}</label>
+      <input type="color" id="cp_${key}" oninput="syncFromPicker('${key}')">
+      <input type="text"  id="ct_${key}" class="color-text" maxlength="7" placeholder="#000000"
+             oninput="syncFromText('${key}')" spellcheck="false">
+    </div>
+  `).join('');
+}
+
+function populateCustomFields(themeId) {
+  const theme = THEMES.find(t => t.id === themeId);
+  if (!theme) {
+    // 'custom' — read from stored colors
+    const raw = localStorage.getItem('wk_custom_colors');
+    if (!raw) return;
+    const colors = JSON.parse(raw);
+    for (const { key } of CUSTOM_VARS) setFieldValue(key, colors[key] ?? '#000000');
+    return;
+  }
+  for (const { key } of CUSTOM_VARS) setFieldValue(key, theme[key] ?? '#000000');
+}
+
+function setFieldValue(key, hex) {
+  const picker = document.getElementById(`cp_${key}`);
+  const text   = document.getElementById(`ct_${key}`);
+  if (picker) picker.value = hex;
+  if (text)   { text.value = hex; text.classList.remove('invalid'); }
+}
+
+function syncFromPicker(key) {
+  const val = document.getElementById(`cp_${key}`).value;
+  const text = document.getElementById(`ct_${key}`);
+  text.value = val;
+  text.classList.remove('invalid');
+}
+
+function syncFromText(key) {
+  const text = document.getElementById(`ct_${key}`);
+  const val  = text.value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById(`cp_${key}`).value = val;
+    text.classList.remove('invalid');
+  } else {
+    text.classList.add('invalid');
+  }
+}
+
+function applyCustomTheme() {
+  const colors = {};
+  for (const { key } of CUSTOM_VARS) {
+    const val = document.getElementById(`ct_${key}`)?.value.trim() ?? '';
+    if (!/^#[0-9a-fA-F]{6}$/.test(val)) {
+      document.getElementById(`ct_${key}`)?.classList.add('invalid');
+      return;
+    }
+    colors[key] = val;
+  }
+  localStorage.setItem('wk_custom_colors', JSON.stringify(colors));
+
+  state.theme = 'custom';
+  document.documentElement.setAttribute('data-theme', 'custom');
+  localStorage.setItem('wk_theme', 'custom');
+
+  for (const { key, cssVar } of CUSTOM_VARS) {
+    document.documentElement.style.setProperty(cssVar, colors[key]);
+  }
+  document.documentElement.style.setProperty('--kanji', colors.pink);
+
+  renderThemeGrid();
+  if (state.chart) renderChart();
+}
+
+function setCustomTheme() {
+  applyStoredCustomColors();
+  state.theme = 'custom';
+  localStorage.setItem('wk_theme', 'custom');
+  renderThemeGrid();
+  populateCustomFields('custom');
+  if (state.chart) renderChart();
+}
+
+function resetCustomFields() {
+  populateCustomFields(state.theme === 'custom' ? 'dark' : state.theme);
 }
 
 // ── Settings ───────────────────────────────────────────────────────────────
@@ -795,6 +1010,8 @@ function openSettings() {
   const saved = localStorage.getItem('wk_token');
   document.getElementById('settingsToken').value = saved ? '••••••••' : '';
   renderThemeGrid();
+  renderCustomFields();
+  populateCustomFields(state.theme);
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
