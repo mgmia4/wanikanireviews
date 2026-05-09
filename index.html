@@ -229,6 +229,46 @@
       border-radius: 3px;
     }
 
+    /* ── Filter checkboxes ── */
+    .filter-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.4rem 0.9rem;
+      transition: border-color 0.15s, opacity 0.15s;
+      user-select: none;
+    }
+
+    .filter-chip input[type="checkbox"] { display: none; }
+
+    .filter-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .filter-chip.radical  { --chip-color: var(--radical); }
+    .filter-chip.kanji    { --chip-color: var(--kanji); }
+    .filter-chip.vocab    { --chip-color: var(--vocab); }
+
+    .filter-chip .dot     { background: var(--chip-color); }
+    .filter-chip.active   { border-color: var(--chip-color); color: var(--chip-color); }
+    .filter-chip.inactive { opacity: 0.4; }
+
     /* ── Messages ── */
     #statusMsg {
       text-align: center;
@@ -267,6 +307,7 @@
   <div id="appContent" style="display:none;">
     <div class="stats-bar" id="statsBar"></div>
     <div class="period-buttons" id="periodBtns"></div>
+    <div class="filter-row" id="filterRow"></div>
     <div class="chart-wrap">
       <canvas id="reviewChart"></canvas>
     </div>
@@ -296,6 +337,7 @@ let state = {
   period: 7,
   selectedDate: null,
   chart: null,
+  filters: { radical: true, kanji: true, vocabulary: true },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -422,6 +464,7 @@ async function loadData() {
     document.getElementById('appContent').style.display = 'block';
     renderStats();
     renderPeriodButtons();
+    renderFilterCheckboxes();
     renderChart();
   } catch (e) {
     hideStatus();
@@ -451,6 +494,44 @@ function renderStats() {
   `).join('');
 }
 
+// ── Filter helpers ─────────────────────────────────────────────────────────
+
+function subjectTypeGroup(subjectType) {
+  if (subjectType === 'vocabulary' || subjectType === 'kana_vocabulary') return 'vocabulary';
+  return subjectType; // 'radical' | 'kanji'
+}
+
+function assignmentMatchesFilters(a) {
+  return state.filters[subjectTypeGroup(a.data.subject_type)] ?? true;
+}
+
+function filteredForDay(date) {
+  return (state.dayGroups[date] ?? []).filter(assignmentMatchesFilters);
+}
+
+function renderFilterCheckboxes() {
+  const CHIPS = [
+    { key: 'radical',    label: 'Radical',    cls: 'radical' },
+    { key: 'kanji',      label: 'Kanji',      cls: 'kanji'   },
+    { key: 'vocabulary', label: 'Vocabulary', cls: 'vocab'   },
+  ];
+  document.getElementById('filterRow').innerHTML = CHIPS.map(({ key, label, cls }) => `
+    <label class="filter-chip ${cls} ${state.filters[key] ? 'active' : 'inactive'}">
+      <input type="checkbox" ${state.filters[key] ? 'checked' : ''}
+             onchange="toggleFilter('${key}')">
+      <span class="dot"></span>
+      ${label}
+    </label>
+  `).join('');
+}
+
+function toggleFilter(key) {
+  state.filters[key] = !state.filters[key];
+  renderFilterCheckboxes();
+  renderChart();
+  if (state.selectedDate) selectDay(state.selectedDate);
+}
+
 // ── Render: period buttons ─────────────────────────────────────────────────
 
 function renderPeriodButtons() {
@@ -472,7 +553,7 @@ function setPeriod(p) {
 
 function renderChart() {
   const days   = daysArray(state.period);
-  const counts = days.map(d => state.dayGroups[d]?.length ?? 0);
+  const counts = days.map(d => filteredForDay(d).length);
   const today  = todayStr();
 
   const colors = days.map(d => {
@@ -549,9 +630,10 @@ async function selectDay(date) {
   state.selectedDate = date;
   renderChart(); // re-colour bars
 
-  const detail = document.getElementById('dayDetail');
-  const items  = state.dayGroups[date] ?? [];
-  const label  = friendlyDate(date);
+  const detail  = document.getElementById('dayDetail');
+  const allItems = state.dayGroups[date] ?? [];
+  const items   = allItems.filter(assignmentMatchesFilters);
+  const label   = friendlyDate(date);
 
   if (!items.length) {
     detail.innerHTML = `<h2>${label} — No reviews scheduled</h2>`;
@@ -593,8 +675,13 @@ async function selectDay(date) {
       </div>`;
   }).join('');
 
+  const hiddenCount = allItems.length - items.length;
+  const hiddenNote  = hiddenCount > 0
+    ? `<span style="color:var(--muted);font-size:0.75rem;margin-left:0.5rem;">(${hiddenCount} hidden by filter)</span>`
+    : '';
+
   detail.innerHTML = `
-    <h2>${label} — ${items.length} review${items.length !== 1 ? 's' : ''}</h2>
+    <h2>${label} — ${items.length} review${items.length !== 1 ? 's' : ''}${hiddenNote}</h2>
     <div class="items-grid">${cards}</div>`;
 }
 
