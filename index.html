@@ -269,6 +269,100 @@
     .filter-chip.active   { border-color: var(--chip-color); color: var(--chip-color); }
     .filter-chip.inactive { opacity: 0.4; }
 
+    /* ── Type breakdown ── */
+    .type-breakdown {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .type-count-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.1rem;
+      flex: 1;
+      min-width: 130px;
+      transition: border-color 0.15s;
+      text-align: left;
+    }
+
+    .type-count-card:hover { border-color: var(--chip-color); }
+    .type-count-card.radical  { --chip-color: var(--radical); }
+    .type-count-card.kanji    { --chip-color: var(--kanji); }
+    .type-count-card.vocab    { --chip-color: var(--vocab); }
+
+    .type-count-card .tcc-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--chip-color);
+      flex-shrink: 0;
+    }
+
+    .type-count-card .tcc-body { display: flex; flex-direction: column; }
+
+    .type-count-card .tcc-count {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--chip-color);
+      line-height: 1;
+    }
+
+    .type-count-card .tcc-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 0.15rem;
+    }
+
+    /* ── Type detail panel ── */
+    #typeDetail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--pink);
+    }
+
+    .close-btn {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    .close-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    .item-card .item-due {
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
     /* ── Messages ── */
     #statusMsg {
       text-align: center;
@@ -308,6 +402,8 @@
     <div class="stats-bar" id="statsBar"></div>
     <div class="period-buttons" id="periodBtns"></div>
     <div class="filter-row" id="filterRow"></div>
+    <div class="type-breakdown" id="typeBreakdown"></div>
+    <div id="typeDetail"></div>
     <div class="chart-wrap">
       <canvas id="reviewChart"></canvas>
     </div>
@@ -465,6 +561,7 @@ async function loadData() {
     renderStats();
     renderPeriodButtons();
     renderFilterCheckboxes();
+    renderTypeBreakdown();
     renderChart();
   } catch (e) {
     hideStatus();
@@ -532,6 +629,107 @@ function toggleFilter(key) {
   if (state.selectedDate) selectDay(state.selectedDate);
 }
 
+// ── Type breakdown ─────────────────────────────────────────────────────────
+
+function renderTypeBreakdown() {
+  const days = daysArray(state.period);
+  const all  = days.flatMap(d => state.dayGroups[d] ?? []);
+
+  const counts = { radical: 0, kanji: 0, vocabulary: 0 };
+  for (const a of all) counts[subjectTypeGroup(a.data.subject_type)]++;
+
+  const CARDS = [
+    { key: 'radical',    label: 'Radicals',   cls: 'radical' },
+    { key: 'kanji',      label: 'Kanji',       cls: 'kanji'   },
+    { key: 'vocabulary', label: 'Vocabulary',  cls: 'vocab'   },
+  ];
+
+  document.getElementById('typeBreakdown').innerHTML = CARDS.map(({ key, label, cls }) => `
+    <button class="type-count-card ${cls}" onclick="showTypeList('${key}')">
+      <span class="tcc-dot"></span>
+      <span class="tcc-body">
+        <span class="tcc-count">${counts[key].toLocaleString()}</span>
+        <span class="tcc-label">${label}</span>
+      </span>
+    </button>
+  `).join('');
+}
+
+async function showTypeList(type) {
+  const TYPE_LABELS = { radical: 'Radicals', kanji: 'Kanji', vocabulary: 'Vocabulary' };
+  const days  = daysArray(state.period);
+  const items = days.flatMap(d => state.dayGroups[d] ?? [])
+                    .filter(a => subjectTypeGroup(a.data.subject_type) === type);
+
+  const panel = document.getElementById('typeDetail');
+  const label = TYPE_LABELS[type];
+
+  if (!items.length) {
+    panel.innerHTML = `<div class="detail-header">
+      <h2>No ${label} in the next ${state.period} days</h2>
+      <button class="close-btn" onclick="closeTypeDetail()">Close</button>
+    </div>`;
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  panel.innerHTML = `<div class="detail-header">
+    <h2>${items.length.toLocaleString()} ${label} · next ${state.period} days</h2>
+    <button class="close-btn" onclick="closeTypeDetail()">Close</button>
+  </div>
+  <div style="color:var(--muted);font-size:0.8rem;padding:0.5rem 0;">Loading items…</div>`;
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  try {
+    await ensureSubjects(items.map(a => a.data.subject_id));
+  } catch (e) {
+    panel.querySelector('div + div').textContent = `Could not load items: ${e.message}`;
+    return;
+  }
+
+  const today = todayStr();
+
+  const cards = items.map(a => {
+    const s = state.subjectCache[a.data.subject_id];
+    if (!s) return '';
+
+    const t       = s.object;
+    const char    = s.data.characters ?? s.data.slug ?? '?';
+    const meaning = s.data.meanings?.find(m => m.primary)?.meaning ?? '';
+    const reading = s.data.readings?.find(r => r.primary)?.reading ?? '';
+    const srs     = a.data.srs_stage;
+    const srsInfo = SRS_INFO[srs];
+
+    const dueKey  = a.data.available_at ? dateStr(a.data.available_at) : null;
+    const dueLabel = !dueKey || dueKey <= today ? 'Due today'
+                   : `Due ${friendlyDate(dueKey)}`;
+
+    return `
+      <div class="item-card ${t}">
+        <div class="char">${char}</div>
+        <div class="type-badge">${t.replace('_', ' ')}</div>
+        <div class="item-meaning">${meaning}</div>
+        ${reading ? `<div class="item-reading">${reading}</div>` : ''}
+        ${srsInfo ? `<div class="srs-pip" style="background:${srsInfo.color}22;color:${srsInfo.color};">${srsInfo.label}</div>` : ''}
+        <div class="item-due">${dueLabel}</div>
+      </div>`;
+  }).join('');
+
+  panel.innerHTML = `<div class="detail-header">
+    <h2>${items.length.toLocaleString()} ${label} · next ${state.period} days</h2>
+    <button class="close-btn" onclick="closeTypeDetail()">Close</button>
+  </div>
+  <div class="items-grid">${cards}</div>`;
+}
+
+function closeTypeDetail() {
+  const panel = document.getElementById('typeDetail');
+  panel.style.display = 'none';
+  panel.innerHTML = '';
+}
+
 // ── Render: period buttons ─────────────────────────────────────────────────
 
 function renderPeriodButtons() {
@@ -545,7 +743,9 @@ function setPeriod(p) {
   state.period = p;
   state.selectedDate = null;
   renderPeriodButtons();
+  renderTypeBreakdown();
   renderChart();
+  closeTypeDetail();
   document.getElementById('dayDetail').style.display = 'none';
 }
 
