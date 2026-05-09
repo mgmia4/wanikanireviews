@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +8,76 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #0d1117;
+    /* ── Themes ─────────────────────────────────────────────────────────── */
+
+    :root,
+    [data-theme="dark"] {
+      --bg:      #0d1117;
       --surface: #161b22;
-      --border: #30363d;
-      --muted: #8b949e;
-      --text: #e6edf3;
-      --pink: #f100a1;
+      --border:  #30363d;
+      --muted:   #8b949e;
+      --text:    #e6edf3;
+      --pink:    #f100a1;
       --radical: #00aaff;
-      --kanji: #f100a1;
-      --vocab: #9b59b6;
+      --kanji:   #f100a1;
+      --vocab:   #9b59b6;
     }
 
+    [data-theme="warm"] {
+      --bg:      #161008;
+      --surface: #21180d;
+      --border:  #3d2e1a;
+      --muted:   #a0896e;
+      --text:    #f0e6d0;
+      --pink:    #f100a1;
+      --radical: #3ab5ff;
+      --kanji:   #f100a1;
+      --vocab:   #b07fd4;
+    }
+
+    [data-theme="slate"] {
+      --bg:      #1e2030;
+      --surface: #24273a;
+      --border:  #363a4f;
+      --muted:   #8087a2;
+      --text:    #cad3f5;
+      --pink:    #f5699c;
+      --radical: #89dceb;
+      --kanji:   #f5699c;
+      --vocab:   #cba6f7;
+    }
+
+    [data-theme="onyx"] {
+      --bg:      #21252b;
+      --surface: #282c34;
+      --border:  #3e4451;
+      --muted:   #7f848e;
+      --text:    #abb2bf;
+      --pink:    #e06c9f;
+      --radical: #61afef;
+      --kanji:   #e06c9f;
+      --vocab:   #c678dd;
+    }
+
+    [data-theme="dusk"] {
+      --bg:      #1a1625;
+      --surface: #221d30;
+      --border:  #3a3255;
+      --muted:   #8b80a8;
+      --text:    #dcd6f5;
+      --pink:    #f472b6;
+      --radical: #7dd3fc;
+      --kanji:   #f472b6;
+      --vocab:   #c084fc;
+    }
+
+    /* ── Base ── */
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      transition: background 0.25s, color 0.25s;
     }
 
     /* ── Header ── */
@@ -35,6 +88,9 @@
       display: flex;
       align-items: center;
       gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     header h1 {
@@ -45,24 +101,115 @@
       white-space: nowrap;
     }
 
-    .token-row {
+    .header-right {
       margin-left: auto;
       display: flex;
       align-items: center;
+      gap: 0.75rem;
+    }
+
+    #userBadge {
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0.35rem 0.5rem;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .icon-btn:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── Settings overlay ── */
+    #settingsOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    #settingsOverlay.open { display: flex; }
+
+    #settingsPanel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .settings-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0.2rem;
+    }
+
+    .settings-close:hover { color: var(--text); }
+
+    .settings-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-section:last-child { margin-bottom: 0; }
+
+    .settings-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.6rem;
+    }
+
+    .token-field {
+      display: flex;
       gap: 0.5rem;
     }
 
-    .token-row input {
+    .token-field input {
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text);
-      padding: 0.45rem 0.75rem;
-      font-size: 0.8rem;
-      width: 260px;
+      flex: 1;
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
     }
 
-    .token-row input:focus { outline: none; border-color: var(--pink); }
+    .token-field input:focus { outline: none; border-color: var(--pink); }
 
     .btn-primary {
       background: var(--pink);
@@ -72,17 +219,54 @@
       cursor: pointer;
       font-size: 0.8rem;
       font-weight: 600;
-      padding: 0.45rem 1rem;
+      padding: 0.5rem 1rem;
       white-space: nowrap;
       transition: opacity 0.15s;
     }
 
     .btn-primary:hover { opacity: 0.85; }
 
-    #userBadge {
-      font-size: 0.8rem;
+    .token-hint {
+      font-size: 0.72rem;
       color: var(--muted);
-      white-space: nowrap;
+      margin-top: 0.4rem;
+    }
+
+    .token-hint a { color: var(--pink); text-decoration: none; }
+    .token-hint a:hover { text-decoration: underline; }
+
+    /* ── Theme grid ── */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.65rem;
+    }
+
+    .theme-swatch {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+
+    .theme-swatch:hover { border-color: var(--muted); }
+    .theme-swatch.active { border-color: var(--pink); }
+
+    .swatch-preview {
+      height: 40px;
+      display: flex;
+    }
+
+    .swatch-bg      { flex: 1; }
+    .swatch-surface { flex: 1; }
+
+    .swatch-name {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.4rem 0.6rem;
+      background: var(--bg);
+      color: var(--text);
     }
 
     /* ── Layout ── */
@@ -140,13 +324,8 @@
       transition: border-color 0.15s, color 0.15s, background 0.15s;
     }
 
-    .period-btn:hover { border-color: var(--pink); color: var(--pink); }
-
-    .period-btn.active {
-      background: var(--pink);
-      border-color: var(--pink);
-      color: #fff;
-    }
+    .period-btn:hover  { border-color: var(--pink); color: var(--pink); }
+    .period-btn.active { background: var(--pink); border-color: var(--pink); color: #fff; }
 
     /* ── Filter checkboxes ── */
     .filter-row {
@@ -174,18 +353,17 @@
     .filter-chip input[type="checkbox"] { display: none; }
 
     .filter-chip .dot {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .filter-chip.radical  { --chip-color: var(--radical); }
-    .filter-chip.kanji    { --chip-color: var(--kanji); }
-    .filter-chip.vocab    { --chip-color: var(--vocab); }
+    .filter-chip.radical { --chip-color: var(--radical); }
+    .filter-chip.kanji   { --chip-color: var(--kanji); }
+    .filter-chip.vocab   { --chip-color: var(--vocab); }
 
-    .filter-chip .dot     { background: var(--chip-color); }
-    .filter-chip.active   { border-color: var(--chip-color); color: var(--chip-color); }
+    .filter-chip .dot   { background: var(--chip-color); }
+    .filter-chip.active { border-color: var(--chip-color); color: var(--chip-color); }
     .filter-chip.inactive { opacity: 0.4; }
 
     /* ── Type breakdown ── */
@@ -267,7 +445,6 @@
       align-items: center;
       border-bottom: 1px solid var(--border);
       padding: 0 1rem;
-      gap: 0;
     }
 
     .tab-btn {
@@ -285,11 +462,7 @@
     }
 
     .tab-btn:hover { color: var(--text); }
-
-    .tab-btn.active {
-      border-bottom-color: var(--pink);
-      color: var(--text);
-    }
+    .tab-btn.active { border-bottom-color: var(--pink); color: var(--text); }
 
     .tab-close {
       margin-left: auto;
@@ -304,11 +477,7 @@
 
     .tab-close:hover { color: var(--text); }
 
-    .tab-content {
-      padding: 1.25rem;
-      display: none;
-    }
-
+    .tab-content { padding: 1.25rem; display: none; }
     .tab-content.active { display: block; }
 
     /* ── Item cards ── */
@@ -350,9 +519,9 @@
 
     a.type-badge:hover { opacity: 0.75; }
 
-    .item-card.radical       .type-badge { background: rgba(0,170,255,0.15); color: var(--radical); }
-    .item-card.kanji         .type-badge { background: rgba(241,0,161,0.15); color: var(--kanji); }
-    .item-card.vocabulary    .type-badge,
+    .item-card.radical        .type-badge { background: rgba(0,170,255,0.15);  color: var(--radical); }
+    .item-card.kanji          .type-badge { background: rgba(241,0,161,0.15);  color: var(--kanji); }
+    .item-card.vocabulary     .type-badge,
     .item-card.kana_vocabulary .type-badge { background: rgba(155,89,182,0.15); color: var(--vocab); }
 
     .item-meaning { font-size: 0.72rem; color: var(--muted); }
@@ -368,7 +537,7 @@
     #tooltip {
       position: fixed;
       z-index: 9999;
-      background: #1c2128;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
@@ -424,29 +593,58 @@
 </head>
 <body>
 
+<!-- ── Settings overlay ──────────────────────────────────────────────────── -->
+<div id="settingsOverlay" onclick="overlayClick(event)">
+  <div id="settingsPanel">
+    <div class="settings-header">
+      <h2>Settings</h2>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">API Token</div>
+      <div class="token-field">
+        <input type="password" id="settingsToken" placeholder="Paste your WaniKani v2 API token…" autocomplete="off">
+        <button class="btn-primary" onclick="saveToken()">Save &amp; Load</button>
+      </div>
+      <div class="token-hint">
+        Get your token at
+        <a href="https://www.wanikani.com/settings/personal_access_tokens" target="_blank" rel="noopener">
+          wanikani.com → Settings → API Tokens
+        </a>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Color Theme</div>
+      <div class="theme-grid" id="themeGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Header ───────────────────────────────────────────────────────────── -->
 <header>
   <h1>WaniKani Reviews</h1>
-  <div class="token-row">
-    <input type="password" id="tokenInput" placeholder="Paste API token…" autocomplete="off">
-    <button class="btn-primary" onclick="handleLoad()">Load</button>
+  <div class="header-right">
     <span id="userBadge"></span>
+    <button class="icon-btn" onclick="openSettings()" title="Settings">⚙</button>
   </div>
 </header>
 
+<!-- ── Main ─────────────────────────────────────────────────────────────── -->
 <main>
   <div id="errorMsg"></div>
-  <div id="statusMsg">Enter your WaniKani API v2 token to get started.</div>
+  <div id="statusMsg">Open Settings (⚙) to enter your API token.</div>
 
   <div id="appContent" style="display:none;">
-    <div class="stats-bar" id="statsBar"></div>
+    <div class="stats-bar"     id="statsBar"></div>
     <div class="period-buttons" id="periodBtns"></div>
-    <div class="filter-row" id="filterRow"></div>
+    <div class="filter-row"    id="filterRow"></div>
     <div class="type-breakdown" id="typeBreakdown"></div>
     <div class="chart-wrap">
       <canvas id="reviewChart"></canvas>
     </div>
 
-    <!-- Tabbed detail panel (below chart) -->
     <div id="detailPanel">
       <div class="tab-bar">
         <button id="tabBtnDay"  class="tab-btn" onclick="switchTab('day')">Reviews</button>
@@ -459,8 +657,18 @@
   </div>
 </main>
 
+<div id="tooltip"></div>
+
 <script>
 const PERIODS = [7, 14, 21, 30, 60, 90];
+
+const THEMES = [
+  { id: 'dark',  name: 'Dark',   bg: '#0d1117', surface: '#161b22' },
+  { id: 'warm',  name: 'Warm',   bg: '#161008', surface: '#21180d' },
+  { id: 'slate', name: 'Slate',  bg: '#1e2030', surface: '#24273a' },
+  { id: 'onyx',  name: 'Onyx',   bg: '#21252b', surface: '#282c34' },
+  { id: 'dusk',  name: 'Dusk',   bg: '#1a1625', surface: '#221d30' },
+];
 
 const SRS_INFO = {
   1: { label: 'Apprentice I',   color: '#f85149' },
@@ -482,8 +690,67 @@ let state = {
   selectedDate: null,
   chart: null,
   filters: { radical: true, kanji: true, vocabulary: true },
-  activeTab: null,  // 'day' | 'type'
+  activeTab: null,
+  theme: 'dark',
 };
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+
+function setTheme(id) {
+  state.theme = id;
+  document.documentElement.setAttribute('data-theme', id);
+  localStorage.setItem('wk_theme', id);
+  renderThemeGrid();
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('wk_theme') ?? 'dark';
+  state.theme = saved;
+  document.documentElement.setAttribute('data-theme', saved);
+}
+
+function renderThemeGrid() {
+  document.getElementById('themeGrid').innerHTML = THEMES.map(t => `
+    <div class="theme-swatch ${t.id === state.theme ? 'active' : ''}" onclick="setTheme('${t.id}')">
+      <div class="swatch-preview">
+        <div class="swatch-bg"      style="background:${t.bg}"></div>
+        <div class="swatch-surface" style="background:${t.surface}"></div>
+      </div>
+      <div class="swatch-name">${t.name}</div>
+    </div>
+  `).join('');
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+
+function openSettings() {
+  const saved = localStorage.getItem('wk_token');
+  document.getElementById('settingsToken').value = saved ? '••••••••' : '';
+  renderThemeGrid();
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+
+async function saveToken() {
+  const raw = document.getElementById('settingsToken').value.trim();
+  if (!raw || raw === '••••••••') {
+    if (!state.token) return;      // nothing to do
+    closeSettings();
+    return;
+  }
+  state.token = raw;
+  localStorage.setItem('wk_token', raw);
+  document.getElementById('settingsToken').value = '••••••••';
+  closeSettings();
+  await loadData();
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -491,26 +758,23 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function dateStr(isoOrDate) {
-  if (isoOrDate instanceof Date) return isoOrDate.toISOString().slice(0, 10);
-  return isoOrDate.slice(0, 10);
+function dateStr(v) {
+  return (v instanceof Date ? v.toISOString() : v).slice(0, 10);
 }
 
 function daysArray(n) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
   return Array.from({ length: n }, (_, i) =>
-    new Date(today.getTime() + i * 86_400_000).toISOString().slice(0, 10)
+    new Date(t.getTime() + i * 86_400_000).toISOString().slice(0, 10)
   );
 }
 
 function friendlyDate(str) {
   const today = todayStr();
-  const tomorrow = new Date();
-  tomorrow.setHours(0, 0, 0, 0);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (str === today) return 'Today';
-  if (str === tomorrow.toISOString().slice(0, 10)) return 'Tomorrow';
+  const tom   = new Date(); tom.setHours(0,0,0,0); tom.setDate(tom.getDate()+1);
+  if (str === today)                           return 'Today';
+  if (str === tom.toISOString().slice(0,10))  return 'Tomorrow';
   return new Date(str + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric'
   });
@@ -531,10 +795,7 @@ function wkUrl(subject) {
 
 async function wkFetch(url) {
   const res = await fetch(url, {
-    headers: {
-      'Authorization': `Bearer ${state.token}`,
-      'Wanikani-Revision': '20170710',
-    }
+    headers: { 'Authorization': `Bearer ${state.token}`, 'Wanikani-Revision': '20170710' }
   });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -559,16 +820,16 @@ async function ensureSubjects(ids) {
   if (!missing.length) return;
   for (let i = 0; i < missing.length; i += 1000) {
     const chunk = missing.slice(i, i + 1000);
-    const data = await wkFetch(`https://api.wanikani.com/v2/subjects?ids=${chunk.join(',')}`);
+    const data  = await wkFetch(`https://api.wanikani.com/v2/subjects?ids=${chunk.join(',')}`);
     for (const s of data.data) state.subjectCache[s.id] = s;
   }
 }
 
-// ── Data processing ────────────────────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────────────────────
 
 function buildDayGroups(assignments) {
   const groups = {};
-  const today = todayStr();
+  const today  = todayStr();
   for (const a of assignments) {
     const at = a.data.available_at;
     if (!at) continue;
@@ -578,19 +839,7 @@ function buildDayGroups(assignments) {
   return groups;
 }
 
-// ── Load data ──────────────────────────────────────────────────────────────
-
-async function handleLoad() {
-  const raw = document.getElementById('tokenInput').value.trim();
-  if (!raw || raw === '••••••••') {
-    if (!state.token) return showError('Please enter your API token.');
-  } else {
-    state.token = raw;
-    localStorage.setItem('wk_token', raw);
-    document.getElementById('tokenInput').value = '••••••••';
-  }
-  await loadData();
-}
+// ── Load ───────────────────────────────────────────────────────────────────
 
 async function loadData() {
   showStatus('Loading…');
@@ -626,7 +875,7 @@ async function loadData() {
   }
 }
 
-// ── Render: stats ──────────────────────────────────────────────────────────
+// ── Stats ──────────────────────────────────────────────────────────────────
 
 function renderStats() {
   const today = todayStr();
@@ -648,11 +897,10 @@ function renderStats() {
   `).join('');
 }
 
-// ── Filter helpers ─────────────────────────────────────────────────────────
+// ── Filters ────────────────────────────────────────────────────────────────
 
-function subjectTypeGroup(subjectType) {
-  if (subjectType === 'vocabulary' || subjectType === 'kana_vocabulary') return 'vocabulary';
-  return subjectType;
+function subjectTypeGroup(t) {
+  return (t === 'vocabulary' || t === 'kana_vocabulary') ? 'vocabulary' : t;
 }
 
 function assignmentMatchesFilters(a) {
@@ -673,8 +921,7 @@ function renderFilterCheckboxes() {
     <label class="filter-chip ${cls} ${state.filters[key] ? 'active' : 'inactive'}">
       <input type="checkbox" ${state.filters[key] ? 'checked' : ''}
              onchange="toggleFilter('${key}')">
-      <span class="dot"></span>
-      ${label}
+      <span class="dot"></span>${label}
     </label>
   `).join('');
 }
@@ -689,9 +936,8 @@ function toggleFilter(key) {
 // ── Type breakdown ─────────────────────────────────────────────────────────
 
 function renderTypeBreakdown() {
-  const days = daysArray(state.period);
-  const all  = days.flatMap(d => state.dayGroups[d] ?? []);
-
+  const days   = daysArray(state.period);
+  const all    = days.flatMap(d => state.dayGroups[d] ?? []);
   const counts = { radical: 0, kanji: 0, vocabulary: 0 };
   for (const a of all) counts[subjectTypeGroup(a.data.subject_type)]++;
 
@@ -700,7 +946,6 @@ function renderTypeBreakdown() {
     { key: 'kanji',      label: 'Kanji',     cls: 'kanji'   },
     { key: 'vocabulary', label: 'Vocabulary',cls: 'vocab'   },
   ];
-
   document.getElementById('typeBreakdown').innerHTML = CARDS.map(({ key, label, cls }) => `
     <button class="type-count-card ${cls}" onclick="showTypeTab('${key}')">
       <span class="tcc-dot"></span>
@@ -712,148 +957,7 @@ function renderTypeBreakdown() {
   `).join('');
 }
 
-// ── Tab panel ──────────────────────────────────────────────────────────────
-
-function switchTab(tab) {
-  state.activeTab = tab;
-  document.getElementById('tabBtnDay') .classList.toggle('active', tab === 'day');
-  document.getElementById('tabBtnType').classList.toggle('active', tab === 'type');
-  document.getElementById('tabDay') .classList.toggle('active', tab === 'day');
-  document.getElementById('tabType').classList.toggle('active', tab === 'type');
-}
-
-function openDetailPanel(tab) {
-  document.getElementById('detailPanel').style.display = 'block';
-  switchTab(tab);
-  document.getElementById('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function closeDetailPanel() {
-  document.getElementById('detailPanel').style.display = 'none';
-  document.getElementById('tabDay').innerHTML  = '';
-  document.getElementById('tabType').innerHTML = '';
-  state.activeTab    = null;
-  state.selectedDate = null;
-  renderChart();
-}
-
-// ── Day tab ────────────────────────────────────────────────────────────────
-
-function buildItemCards(items, showDue = false) {
-  const today = todayStr();
-  return items.map(a => {
-    const s = state.subjectCache[a.data.subject_id];
-    if (!s) return '';
-
-    const type    = s.object;
-    const char    = s.data.characters ?? s.data.slug ?? '?';
-    const meaning = s.data.meanings?.find(m => m.primary)?.meaning ?? '';
-    const reading = s.data.readings?.find(r => r.primary)?.reading ?? '';
-    const srs     = a.data.srs_stage;
-    const srsInfo = SRS_INFO[srs];
-    const url     = wkUrl(s);
-
-    let dueHtml = '';
-    if (showDue) {
-      const dueKey   = a.data.available_at ? dateStr(a.data.available_at) : null;
-      const dueLabel = !dueKey || dueKey <= today ? 'Due today' : `Due ${friendlyDate(dueKey)}`;
-      dueHtml = `<div class="item-due">${dueLabel}</div>`;
-    }
-
-    return `
-      <div class="item-card ${type}">
-        <div class="char">${char}</div>
-        <a class="type-badge" href="${url}" target="_blank" rel="noopener noreferrer">${type.replace('_', ' ')}</a>
-        <div class="item-meaning${s.data.meaning_mnemonic ? ' has-tooltip' : ''}"
-             ${s.data.meaning_mnemonic ? `onmouseenter="showMnemonicTooltip(this,${s.id},'meaning')" onmouseleave="hideTooltip()"` : ''}>${meaning}</div>
-        ${reading ? `<div class="item-reading${s.data.reading_mnemonic ? ' has-tooltip' : ''}"
-             ${s.data.reading_mnemonic ? `onmouseenter="showMnemonicTooltip(this,${s.id},'reading')" onmouseleave="hideTooltip()"` : ''}>${reading}</div>` : ''}
-        ${srsInfo ? `<div class="srs-pip" style="background:${srsInfo.color}22;color:${srsInfo.color};">${srsInfo.label}</div>` : ''}
-        ${dueHtml}
-      </div>`;
-  }).join('');
-}
-
-async function selectDay(date) {
-  state.selectedDate = date;
-  renderChart();
-
-  // Update tab label
-  const allItems = state.dayGroups[date] ?? [];
-  const items    = allItems.filter(assignmentMatchesFilters);
-  document.getElementById('tabBtnDay').textContent =
-    `${friendlyDate(date)} · ${items.length} review${items.length !== 1 ? 's' : ''}`;
-
-  openDetailPanel('day');
-  await renderDayTab(date);
-}
-
-async function renderDayTab(date) {
-  const allItems = state.dayGroups[date] ?? [];
-  const items    = allItems.filter(assignmentMatchesFilters);
-  const label    = friendlyDate(date);
-  const tab      = document.getElementById('tabDay');
-
-  if (!items.length) {
-    tab.innerHTML = `<div class="tab-heading">${label} — No reviews scheduled</div>`;
-    return;
-  }
-
-  const hiddenCount = allItems.length - items.length;
-  const hiddenNote  = hiddenCount > 0
-    ? ` <span style="color:var(--muted);font-size:0.75rem;">(${hiddenCount} hidden by filter)</span>`
-    : '';
-
-  tab.innerHTML = `<div class="tab-heading">${label} — ${items.length} review${items.length !== 1 ? 's' : ''}${hiddenNote}</div>
-    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">Loading items…</div>`;
-
-  try {
-    await ensureSubjects(items.map(a => a.data.subject_id));
-  } catch (e) {
-    tab.innerHTML += `<div style="color:#f85149;font-size:0.8rem;">${e.message}</div>`;
-    return;
-  }
-
-  tab.innerHTML = `<div class="tab-heading">${label} — ${items.length} review${items.length !== 1 ? 's' : ''}${hiddenNote}</div>
-    <div class="items-grid">${buildItemCards(items)}</div>`;
-}
-
-// ── Type tab ───────────────────────────────────────────────────────────────
-
-async function showTypeTab(type) {
-  const TYPE_LABELS = { radical: 'Radicals', kanji: 'Kanji', vocabulary: 'Vocabulary' };
-  const days  = daysArray(state.period);
-  const items = days.flatMap(d => state.dayGroups[d] ?? [])
-                    .filter(a => subjectTypeGroup(a.data.subject_type) === type);
-  const label = TYPE_LABELS[type];
-
-  document.getElementById('tabBtnType').textContent =
-    `${items.length.toLocaleString()} ${label}`;
-
-  openDetailPanel('type');
-
-  const tab = document.getElementById('tabType');
-
-  if (!items.length) {
-    tab.innerHTML = `<div class="tab-heading">No ${label} in the next ${state.period} days</div>`;
-    return;
-  }
-
-  tab.innerHTML = `<div class="tab-heading">${items.length.toLocaleString()} ${label} · next ${state.period} days</div>
-    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">Loading items…</div>`;
-
-  try {
-    await ensureSubjects(items.map(a => a.data.subject_id));
-  } catch (e) {
-    tab.innerHTML += `<div style="color:#f85149;font-size:0.8rem;">${e.message}</div>`;
-    return;
-  }
-
-  tab.innerHTML = `<div class="tab-heading">${items.length.toLocaleString()} ${label} · next ${state.period} days</div>
-    <div class="items-grid">${buildItemCards(items, true)}</div>`;
-}
-
-// ── Render: period buttons ─────────────────────────────────────────────────
+// ── Period buttons ─────────────────────────────────────────────────────────
 
 function renderPeriodButtons() {
   document.getElementById('periodBtns').innerHTML = PERIODS.map(p => `
@@ -870,7 +974,7 @@ function setPeriod(p) {
   closeDetailPanel();
 }
 
-// ── Render: chart ──────────────────────────────────────────────────────────
+// ── Chart ──────────────────────────────────────────────────────────────────
 
 function renderChart() {
   const days   = daysArray(state.period);
@@ -922,12 +1026,8 @@ function renderChart() {
       scales: {
         x: {
           grid:  { color: '#21262d' },
-          ticks: {
-            color: '#8b949e',
-            maxRotation: 45,
-            autoSkip: true,
-            maxTicksLimit: state.period <= 30 ? state.period : 20,
-          }
+          ticks: { color: '#8b949e', maxRotation: 45, autoSkip: true,
+                   maxTicksLimit: state.period <= 30 ? state.period : 20 }
         },
         y: {
           grid: { color: '#21262d' },
@@ -939,17 +1039,159 @@ function renderChart() {
   });
 }
 
+// ── Tab panel ──────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  state.activeTab = tab;
+  document.getElementById('tabBtnDay') .classList.toggle('active', tab === 'day');
+  document.getElementById('tabBtnType').classList.toggle('active', tab === 'type');
+  document.getElementById('tabDay') .classList.toggle('active', tab === 'day');
+  document.getElementById('tabType').classList.toggle('active', tab === 'type');
+}
+
+function openDetailPanel(tab) {
+  document.getElementById('detailPanel').style.display = 'block';
+  switchTab(tab);
+  document.getElementById('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeDetailPanel() {
+  document.getElementById('detailPanel').style.display = 'none';
+  document.getElementById('tabDay').innerHTML  = '';
+  document.getElementById('tabType').innerHTML = '';
+  state.activeTab    = null;
+  state.selectedDate = null;
+  renderChart();
+}
+
+// ── Item cards ─────────────────────────────────────────────────────────────
+
+function buildItemCards(items, showDue = false) {
+  const today = todayStr();
+  return items.map(a => {
+    const s = state.subjectCache[a.data.subject_id];
+    if (!s) return '';
+
+    const type    = s.object;
+    const char    = s.data.characters ?? s.data.slug ?? '?';
+    const meaning = s.data.meanings?.find(m => m.primary)?.meaning ?? '';
+    const reading = s.data.readings?.find(r => r.primary)?.reading ?? '';
+    const srs     = a.data.srs_stage;
+    const srsInfo = SRS_INFO[srs];
+    const url     = wkUrl(s);
+
+    const mHasTip = !!s.data.meaning_mnemonic;
+    const rHasTip = !!s.data.reading_mnemonic;
+
+    let dueHtml = '';
+    if (showDue) {
+      const dueKey   = a.data.available_at ? dateStr(a.data.available_at) : null;
+      const dueLabel = !dueKey || dueKey <= today ? 'Due today' : `Due ${friendlyDate(dueKey)}`;
+      dueHtml = `<div class="item-due">${dueLabel}</div>`;
+    }
+
+    return `
+      <div class="item-card ${type}">
+        <div class="char">${char}</div>
+        <a class="type-badge" href="${url}" target="_blank" rel="noopener noreferrer">${type.replace('_', ' ')}</a>
+        <div class="item-meaning${mHasTip ? ' has-tooltip' : ''}"
+             ${mHasTip ? `onmouseenter="showMnemonicTooltip(this,${s.id},'meaning')" onmouseleave="hideTooltip()"` : ''}>${meaning}</div>
+        ${reading ? `<div class="item-reading${rHasTip ? ' has-tooltip' : ''}"
+             ${rHasTip ? `onmouseenter="showMnemonicTooltip(this,${s.id},'reading')" onmouseleave="hideTooltip()"` : ''}>${reading}</div>` : ''}
+        ${srsInfo ? `<div class="srs-pip" style="background:${srsInfo.color}22;color:${srsInfo.color};">${srsInfo.label}</div>` : ''}
+        ${dueHtml}
+      </div>`;
+  }).join('');
+}
+
+// ── Day tab ────────────────────────────────────────────────────────────────
+
+async function selectDay(date) {
+  state.selectedDate = date;
+  renderChart();
+
+  const allItems = state.dayGroups[date] ?? [];
+  const items    = allItems.filter(assignmentMatchesFilters);
+  document.getElementById('tabBtnDay').textContent =
+    `${friendlyDate(date)} · ${items.length} review${items.length !== 1 ? 's' : ''}`;
+
+  openDetailPanel('day');
+  await renderDayTab(date);
+}
+
+async function renderDayTab(date) {
+  const allItems = state.dayGroups[date] ?? [];
+  const items    = allItems.filter(assignmentMatchesFilters);
+  const label    = friendlyDate(date);
+  const tab      = document.getElementById('tabDay');
+
+  if (!items.length) {
+    tab.innerHTML = `<div class="tab-heading">${label} — No reviews scheduled</div>`;
+    return;
+  }
+
+  const hiddenCount = allItems.length - items.length;
+  const hiddenNote  = hiddenCount > 0
+    ? ` <span style="color:var(--muted);font-size:0.75rem;">(${hiddenCount} hidden by filter)</span>` : '';
+
+  tab.innerHTML = `<div class="tab-heading">${label} — ${items.length} review${items.length !== 1 ? 's' : ''}${hiddenNote}</div>
+    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">Loading items…</div>`;
+
+  try {
+    await ensureSubjects(items.map(a => a.data.subject_id));
+  } catch (e) {
+    tab.innerHTML += `<div style="color:#f85149;font-size:0.8rem;">${e.message}</div>`;
+    return;
+  }
+
+  tab.innerHTML = `<div class="tab-heading">${label} — ${items.length} review${items.length !== 1 ? 's' : ''}${hiddenNote}</div>
+    <div class="items-grid">${buildItemCards(items)}</div>`;
+}
+
+// ── Type tab ───────────────────────────────────────────────────────────────
+
+async function showTypeTab(type) {
+  const TYPE_LABELS = { radical: 'Radicals', kanji: 'Kanji', vocabulary: 'Vocabulary' };
+  const days  = daysArray(state.period);
+  const items = days.flatMap(d => state.dayGroups[d] ?? [])
+                    .filter(a => subjectTypeGroup(a.data.subject_type) === type);
+  const label = TYPE_LABELS[type];
+
+  document.getElementById('tabBtnType').textContent = `${items.length.toLocaleString()} ${label}`;
+  openDetailPanel('type');
+
+  const tab = document.getElementById('tabType');
+
+  if (!items.length) {
+    tab.innerHTML = `<div class="tab-heading">No ${label} in the next ${state.period} days</div>`;
+    return;
+  }
+
+  tab.innerHTML = `<div class="tab-heading">${items.length.toLocaleString()} ${label} · next ${state.period} days</div>
+    <div style="color:var(--muted);font-size:0.8rem;margin-bottom:0.75rem;">Loading items…</div>`;
+
+  try {
+    await ensureSubjects(items.map(a => a.data.subject_id));
+  } catch (e) {
+    tab.innerHTML += `<div style="color:#f85149;font-size:0.8rem;">${e.message}</div>`;
+    return;
+  }
+
+  tab.innerHTML = `<div class="tab-heading">${items.length.toLocaleString()} ${label} · next ${state.period} days</div>
+    <div class="items-grid">${buildItemCards(items, true)}</div>`;
+}
+
 // ── Mnemonic tooltip ───────────────────────────────────────────────────────
 
 function formatMnemonic(text) {
   if (!text) return '';
   return text
-    .replace(/<radical>(.*?)<\/radical>/gs,   '<span style="color:var(--radical);font-weight:600;">$1</span>')
-    .replace(/<kanji>(.*?)<\/kanji>/gs,       '<span style="color:var(--kanji);font-weight:600;">$1</span>')
-    .replace(/<vocabulary>(.*?)<\/vocabulary>/gs, '<span style="color:var(--vocab);font-weight:600;">$1</span>')
-    .replace(/<meaning>(.*?)<\/meaning>/gs,   '<span style="color:#e3b341;font-weight:600;">$1</span>')
-    .replace(/<reading>(.*?)<\/reading>/gs,   '<span style="color:#58a6ff;font-weight:600;">$1</span>')
-    .replace(/<ja>(.*?)<\/ja>/gs,             '<span style="font-style:italic;">$1</span>')
+    .replace(/<radical>(.*?)<\/radical>/gs,      '<span style="color:var(--radical);font-weight:600;">$1</span>')
+    .replace(/<kanji>(.*?)<\/kanji>/gs,          '<span style="color:var(--kanji);font-weight:600;">$1</span>')
+    .replace(/<vocabulary>(.*?)<\/vocabulary>/gs,'<span style="color:var(--vocab);font-weight:600;">$1</span>')
+    .replace(/<meaning>(.*?)<\/meaning>/gs,      '<span style="color:#e3b341;font-weight:600;">$1</span>')
+    .replace(/<reading>(.*?)<\/reading>/gs,      '<span style="color:#58a6ff;font-weight:600;">$1</span>')
+    .replace(/<ja>(.*?)<\/ja>/gs,                '<span style="font-style:italic;">$1</span>')
     .replace(/<[^>]+>/g, '');
 }
 
@@ -959,17 +1201,16 @@ function showMnemonicTooltip(el, subjectId, type) {
   if (!raw) return;
 
   const tip = document.getElementById('tooltip');
-  tip.innerHTML = formatMnemonic(raw);
+  tip.innerHTML  = formatMnemonic(raw);
   tip.style.display = 'block';
 
   const er = el.getBoundingClientRect();
   const tr = tip.getBoundingClientRect();
-
-  let top  = er.top - tr.height - 8;
+  let top  = er.top  - tr.height - 8;
   let left = er.left + er.width / 2 - tr.width / 2;
 
-  if (top < 8)                               top  = er.bottom + 8;
-  if (left < 8)                              left = 8;
+  if (top < 8)                                 top  = er.bottom + 8;
+  if (left < 8)                                left = 8;
   if (left + tr.width > window.innerWidth - 8) left = window.innerWidth - tr.width - 8;
 
   tip.style.top  = top  + 'px';
@@ -980,11 +1221,11 @@ function hideTooltip() {
   document.getElementById('tooltip').style.display = 'none';
 }
 
-// ── Status / error helpers ─────────────────────────────────────────────────
+// ── Status / error ─────────────────────────────────────────────────────────
 
 function showStatus(msg) {
   const el = document.getElementById('statusMsg');
-  el.textContent = msg;
+  el.textContent  = msg;
   el.style.display = 'block';
 }
 
@@ -994,7 +1235,7 @@ function hideStatus() {
 
 function showError(msg) {
   const el = document.getElementById('errorMsg');
-  el.textContent = msg;
+  el.textContent  = msg;
   el.style.display = 'block';
 }
 
@@ -1004,13 +1245,15 @@ function hideError() {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
-const saved = localStorage.getItem('wk_token');
-if (saved) {
-  state.token = saved;
-  document.getElementById('tokenInput').value = '••••••••';
+loadTheme();
+
+const savedToken = localStorage.getItem('wk_token');
+if (savedToken) {
+  state.token = savedToken;
   loadData();
+} else {
+  openSettings();
 }
 </script>
-<div id="tooltip"></div>
 </body>
 </html>
