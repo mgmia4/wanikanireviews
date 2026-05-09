@@ -71,6 +71,66 @@
       --vocab:   #c084fc;
     }
 
+    [data-theme="paper"] {
+      --bg:      #fafaf8;
+      --surface: #f0ede7;
+      --border:  #d8d4cc;
+      --muted:   #7a7570;
+      --text:    #1c1917;
+      --pink:    #c0006e;
+      --radical: #0077cc;
+      --kanji:   #c0006e;
+      --vocab:   #6b3fa0;
+    }
+
+    [data-theme="parchment"] {
+      --bg:      #fdf8ee;
+      --surface: #f5ecda;
+      --border:  #d9c9a8;
+      --muted:   #8a7558;
+      --text:    #2e1f0a;
+      --pink:    #b5004e;
+      --radical: #0066bb;
+      --kanji:   #b5004e;
+      --vocab:   #5e3590;
+    }
+
+    [data-theme="linen"] {
+      --bg:      #faf7f0;
+      --surface: #ede8de;
+      --border:  #cec5b5;
+      --muted:   #80756a;
+      --text:    #201c14;
+      --pink:    #b80058;
+      --radical: #006aaa;
+      --kanji:   #b80058;
+      --vocab:   #5a3080;
+    }
+
+    [data-theme="rose"] {
+      --bg:      #fff8f6;
+      --surface: #fceee9;
+      --border:  #e8c8c0;
+      --muted:   #9a706a;
+      --text:    #2a1410;
+      --pink:    #c0004a;
+      --radical: #0070bb;
+      --kanji:   #c0004a;
+      --vocab:   #6a2e90;
+    }
+
+    [data-theme="sage"] {
+      --bg:      #f4f8f2;
+      --surface: #e4ede0;
+      --border:  #b8ceb2;
+      --muted:   #5e7858;
+      --text:    #1a2818;
+      --pink:    #c00068;
+      --radical: #006699;
+      --kanji:   #c00068;
+      --vocab:   #5a2e88;
+    }
+
     /* ── Base ── */
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -663,11 +723,18 @@
 const PERIODS = [7, 14, 21, 30, 60, 90];
 
 const THEMES = [
-  { id: 'dark',  name: 'Dark',   bg: '#0d1117', surface: '#161b22' },
-  { id: 'warm',  name: 'Warm',   bg: '#161008', surface: '#21180d' },
-  { id: 'slate', name: 'Slate',  bg: '#1e2030', surface: '#24273a' },
-  { id: 'onyx',  name: 'Onyx',   bg: '#21252b', surface: '#282c34' },
-  { id: 'dusk',  name: 'Dusk',   bg: '#1a1625', surface: '#221d30' },
+  // ── Dark ──
+  { id: 'dark',      name: 'Dark',      bg: '#0d1117', surface: '#161b22', text: '#e6edf3' },
+  { id: 'warm',      name: 'Warm',      bg: '#161008', surface: '#21180d', text: '#f0e6d0' },
+  { id: 'slate',     name: 'Slate',     bg: '#1e2030', surface: '#24273a', text: '#cad3f5' },
+  { id: 'onyx',      name: 'Onyx',      bg: '#21252b', surface: '#282c34', text: '#abb2bf' },
+  { id: 'dusk',      name: 'Dusk',      bg: '#1a1625', surface: '#221d30', text: '#dcd6f5' },
+  // ── Light ──
+  { id: 'paper',     name: 'Paper',     bg: '#fafaf8', surface: '#f0ede7', text: '#1c1917' },
+  { id: 'parchment', name: 'Parchment', bg: '#fdf8ee', surface: '#f5ecda', text: '#2e1f0a' },
+  { id: 'linen',     name: 'Linen',     bg: '#faf7f0', surface: '#ede8de', text: '#201c14' },
+  { id: 'rose',      name: 'Rose',      bg: '#fff8f6', surface: '#fceee9', text: '#2a1410' },
+  { id: 'sage',      name: 'Sage',      bg: '#f4f8f2', surface: '#e4ede0', text: '#1a2818' },
 ];
 
 const SRS_INFO = {
@@ -701,6 +768,7 @@ function setTheme(id) {
   document.documentElement.setAttribute('data-theme', id);
   localStorage.setItem('wk_theme', id);
   renderThemeGrid();
+  if (state.chart) renderChart();
 }
 
 function loadTheme() {
@@ -716,7 +784,7 @@ function renderThemeGrid() {
         <div class="swatch-bg"      style="background:${t.bg}"></div>
         <div class="swatch-surface" style="background:${t.surface}"></div>
       </div>
-      <div class="swatch-name">${t.name}</div>
+      <div class="swatch-name" style="background:${t.bg};color:${t.text}">${t.name}</div>
     </div>
   `).join('');
 }
@@ -991,6 +1059,10 @@ function renderChart() {
     new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   );
 
+  const css       = getComputedStyle(document.documentElement);
+  const gridColor = css.getPropertyValue('--border').trim();
+  const tickColor = css.getPropertyValue('--muted').trim();
+
   const ctx = document.getElementById('reviewChart').getContext('2d');
   if (state.chart) state.chart.destroy();
 
@@ -1025,13 +1097,13 @@ function renderChart() {
       },
       scales: {
         x: {
-          grid:  { color: '#21262d' },
-          ticks: { color: '#8b949e', maxRotation: 45, autoSkip: true,
+          grid:  { color: gridColor },
+          ticks: { color: tickColor, maxRotation: 45, autoSkip: true,
                    maxTicksLimit: state.period <= 30 ? state.period : 20 }
         },
         y: {
-          grid: { color: '#21262d' },
-          ticks: { color: '#8b949e', precision: 0 },
+          grid: { color: gridColor },
+          ticks: { color: tickColor, precision: 0 },
           beginAtZero: true,
         }
       }
